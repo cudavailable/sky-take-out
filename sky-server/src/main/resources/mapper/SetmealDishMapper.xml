@@ -10,4 +10,11 @@
         </foreach>
     </select>
 
+    <insert id="insertBatch" parameterType="list">
+        insert into setmeal_dish (setmeal_id, dish_id, name, price, copies) values
+        <foreach collection="setmealDishes" item="df" separator=",">
+            (#{df.setmealId}, #{df.dishId}, #{df.name}, #{df.price}, #{df.copies})
+        </foreach>
+    </insert>
+
 </mapper>
