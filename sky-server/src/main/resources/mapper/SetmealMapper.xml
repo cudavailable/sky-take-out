@@ -9,7 +9,23 @@
         (#{categoryId}, #{name}, #{price}, #{status}, #{description}, #{image}, #{createTime}, #{updateTime}, #{createUser}, #{updateUser})
     </insert>
 
-<!--    <select id="pageQuery" resultType="com.sky.vo.DishVO">-->
+    <select id="pageQuery" resultType="com.sky.vo.SetmealVO">
+        SELECT s.*, c.name AS categoryName FROM setmeal s LEFT JOIN category c ON c.id = s.category_id
+        <where>
+            <if test="name != null">
+                and `s.name` like concat('%', #{name}, '%')
+            </if>
+            <if test="categoryId != null">
+                and `s.category_id` = #{categoryId}
+            </if>
+            <if test="status">
+                and `s.status` = #{status}
+            </if>
+        </where>
+        order by s.create_time desc
+    </select>
+
+    <!--    <select id="pageQuery" resultType="com.sky.vo.DishVO">-->
 <!--        SELECT d.*, c.name AS categoryName FROM dish d LEFT JOIN category c ON d.category_id = c.id-->
 <!--        <where>-->
 <!--            <if test="name != null">-->
