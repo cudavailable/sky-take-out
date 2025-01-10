@@ -91,4 +91,52 @@ public class SetmealServiceImpl implements SetmealService {
         // 批量删除setmeal_dish表中的数据项
         setmealDishMapper.deleteBatch(ids);
     }
+
+    /**
+     * 更新套餐
+     * @param setmealDTO
+     */
+    @Transactional
+    public void update(SetmealDTO setmealDTO) {
+        // 更新根据修改的套餐的id更新setmeal表中的数据
+        Setmeal setmeal = new Setmeal();
+        BeanUtils.copyProperties(setmealDTO, setmeal);
+        setmealMapper.update(setmeal);
+
+        // 删除setmeal_dish表中此套餐id关联的数据项
+        Long setmealId = setmealDTO.getId();
+        setmealDishMapper.deleteBySetmealId(setmealId);
+
+        // 插入更新后传过来的数据项
+        List<SetmealDish> setmealDishes = setmealDTO.getSetmealDishes();
+        if (setmealDishes != null && setmealDishes.size() > 0) {
+            setmealDishes.forEach(setmealDish -> {
+                setmealDish.setSetmealId(setmealId);
+            });
+            setmealDishMapper.insertBatch(setmealDishes);
+        }
+
+    }
+
+    /**
+     * 根据id查询套餐
+     *
+     * @param id
+     * @return
+     */
+    public SetmealVO getById(Long id) {
+        // 根据套餐id查询setmeal表，返回对应数据项
+        Setmeal setmeal = setmealMapper.getById(id);
+
+        // 创建将返回的数据类型，并拷贝已获取到的数据
+        SetmealVO setmealVO = new SetmealVO();
+        BeanUtils.copyProperties(setmeal, setmealVO);
+
+        // 根据套餐id查询setmeal_dish表，并返回对应数据项
+        List<SetmealDish> setmealDishes = setmealDishMapper.getBySetmealId(id);
+
+        // 完成套餐数据的构造，并返回
+        setmealVO.setSetmealDishes(setmealDishes);
+        return setmealVO;
+    }
 }
