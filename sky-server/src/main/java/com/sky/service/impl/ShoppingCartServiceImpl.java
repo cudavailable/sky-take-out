@@ -1,5 +1,6 @@
 package com.sky.service.impl;
 
+import com.fasterxml.jackson.databind.ser.Serializers;
 import com.sky.context.BaseContext;
 import com.sky.dto.ShoppingCartDTO;
 import com.sky.entity.Dish;
@@ -72,5 +73,16 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
 
         }
 
+    }
+
+    /**
+     * 查看购物车
+     * @return
+     */
+    public List<ShoppingCart> showShoppingCart() {
+        ShoppingCart shoppingCart = ShoppingCart.builder().
+                userId(BaseContext.getCurrentId()).build();
+
+        return shoppingCartMapper.list(shoppingCart);
     }
 }
