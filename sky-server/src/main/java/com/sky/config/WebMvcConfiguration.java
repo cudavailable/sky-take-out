@@ -35,6 +35,9 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     @Autowired
     private JwtTokenUserInterceptor jwtTokenUserInterceptor;
 
+    @Autowired
+    private JacksonObjectMapper jacksonObjectMapper;
+
     /**
      * 注册自定义拦截器
      *
@@ -118,4 +121,23 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
         //将自己的转换器加入到容器中
         converters.add(0, converter);
     }
+
+//    /**
+//     * 在这个方法中，通过检查每个 HttpMessageConverter 是否是 MappingJackson2HttpMessageConverter 的实例，
+//     * 然后用你的自定义 ObjectMapper 替换原来的 ObjectMapper，从而确保JSON的序列化和反序列化都使用你定制的设置
+//     * @param converters
+//     */
+//    @Override
+//    public void extendMessageConverters(List<HttpMessageConverter<?>> converters) {
+//        // 遍历所有已注册的HttpMessageConverter
+//        for (HttpMessageConverter<?> converter : converters) {
+//            // 找到MappingJackson2HttpMessageConverter
+//            if (converter instanceof MappingJackson2HttpMessageConverter) {
+//                MappingJackson2HttpMessageConverter jacksonConverter =
+//                        (MappingJackson2HttpMessageConverter) converter;
+//                // 将其ObjectMapper替换为自定义的ObjectMapper
+//                jacksonConverter.setObjectMapper(jacksonObjectMapper);
+//            }
+//        }
+//    }
 }
