@@ -6,10 +6,7 @@ import com.github.pagehelper.PageHelper;
 import com.github.xiaoymin.knife4j.core.util.CollectionUtils;
 import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
-import com.sky.dto.OrdersConfirmDTO;
-import com.sky.dto.OrdersPageQueryDTO;
-import com.sky.dto.OrdersPaymentDTO;
-import com.sky.dto.OrdersSubmitDTO;
+import com.sky.dto.*;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
 import com.sky.exception.OrderBusinessException;
@@ -23,6 +20,7 @@ import com.sky.vo.OrderStatisticsVO;
 import com.sky.vo.OrderSubmitVO;
 import com.sky.vo.OrderVO;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.weaver.ast.Or;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -246,7 +244,7 @@ public class OrderServiceImpl implements OrderService {
      * 取消订单
      * @param id
      */
-    public void cancelOrdecr(Long id){
+    public void cancelOrdecrByUser(Long id){
         Orders orders = orderMapper.getOrderById(id);
 
         // 先看订单是否存在，不存在则抛出异常
@@ -353,6 +351,69 @@ public class OrderServiceImpl implements OrderService {
                 .id(ordersConfirmDTO.getId())
                 .status(Orders.CONFIRMED).build();
         orderMapper.update(orders);
+    }
+
+    /**
+     * 拒单
+     * @param ordersRejectionDTO
+     */
+    public void rejection(OrdersRejectionDTO ordersRejectionDTO) {
+        Orders orders = orderMapper.getOrderById(ordersRejectionDTO.getId());
+
+        // 如果订单不存在或者订单状态不是待接单，则抛出异常
+        if(orders == null || !orders.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        // 如果订单的支付状态为已付款，则拒单需要退款
+        if(orders.getPayStatus().equals(Orders.PAID)){
+            //用户已支付，需要退款
+//            String refund = weChatPayUtil.refund(
+//                    ordersDB.getNumber(),
+//                    ordersDB.getNumber(),
+//                    new BigDecimal(0.01),
+//                    new BigDecimal(0.01));
+//            log.info("申请退款：{}", refund);
+            log.info("申请退款，{}元", orders.getAmount());
+        }
+
+        Orders orderUpdate = Orders.builder()
+                .id(ordersRejectionDTO.getId())
+                .rejectionReason(ordersRejectionDTO.getRejectionReason())
+                .status(Orders.CANCELLED)
+                .cancelTime(LocalDateTime.now())
+                .payStatus(Orders.REFUND).build();
+
+        orderMapper.update(orderUpdate);
+    }
+
+    /**
+     * 取消订单
+     * @param ordersCancelDTO
+     */
+    public void cancelOrdecrByAdmin(OrdersCancelDTO ordersCancelDTO) {
+        Orders orders = orderMapper.getOrderById(ordersCancelDTO.getId());
+
+        // 如果已经付款，需要为用户退款
+        if(orders.getPayStatus().equals(Orders.PAID)){
+            //用户已支付，需要退款
+//            String refund = weChatPayUtil.refund(
+//                    ordersDB.getNumber(),
+//                    ordersDB.getNumber(),
+//                    new BigDecimal(0.01),
+//                    new BigDecimal(0.01));
+//            log.info("申请退款：{}", refund);
+            log.info("申请退款：{}元", orders.getAmount());
+        }
+
+        Orders ordersUpdate = Orders.builder()
+                .id(ordersCancelDTO.getId())
+                .cancelReason(ordersCancelDTO.getCancelReason())
+                .status(Orders.CANCELLED)
+                .cancelTime(LocalDateTime.now())
+                .payStatus(Orders.REFUND).build();
+
+        orderMapper.update(ordersUpdate);
     }
 
     private List<OrderVO> getOrderVOList(Page<Orders> page) {
