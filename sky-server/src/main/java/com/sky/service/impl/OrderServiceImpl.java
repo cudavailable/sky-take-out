@@ -416,6 +416,45 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.update(ordersUpdate);
     }
 
+    /**
+     * 派送订单
+     * @param id
+     */
+    public void delivery(Long id) {
+        Orders orders = orderMapper.getOrderById(id);
+
+        // 如果订单不存在、或订单状态不是已接单，则抛出异常
+        if(orders==null || !orders.getStatus().equals(Orders.CONFIRMED)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders orderUpdate = Orders.builder()
+                .id(id)
+                .status(Orders.DELIVERY_IN_PROGRESS).build();
+
+        orderMapper.update(orderUpdate);
+    }
+
+    /**
+     * 完成订单
+     * @param id
+     */
+    public void complete(Long id) {
+        Orders orders = orderMapper.getOrderById(id);
+
+        // 如果订单不存在、或订单状态不是派送中，则抛出异常
+        if(orders==null || !orders.getStatus().equals(Orders.DELIVERY_IN_PROGRESS)){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders orderUpdate = Orders.builder()
+                .id(id)
+                .status(Orders.COMPLETED)
+                .deliveryTime(LocalDateTime.now()).build();
+
+        orderMapper.update(orderUpdate);
+    }
+
     private List<OrderVO> getOrderVOList(Page<Orders> page) {
         // 需要返回订单菜品信息，自定义OrderVO响应结果
         List<OrderVO> orderVOList = new ArrayList<>();
