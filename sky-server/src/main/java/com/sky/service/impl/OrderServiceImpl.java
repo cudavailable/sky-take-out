@@ -10,6 +10,7 @@ import com.sky.dto.OrdersPaymentDTO;
 import com.sky.dto.OrdersSubmitDTO;
 import com.sky.entity.*;
 import com.sky.exception.AddressBookBusinessException;
+import com.sky.exception.OrderBusinessException;
 import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.*;
 import com.sky.result.PageResult;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +81,11 @@ public class OrderServiceImpl implements OrderService {
         orders.setPhone(addressBook.getPhone());
         orders.setConsignee(addressBook.getConsignee());
         orders.setUserId(userId);
+
+        /**
+         * TODO 需要在用户下单时，向orders表中的address(冗余)项，插入配送地址
+         * 便于在参看订单详情时，展示配送地址
+         */
 
         orderMapper.insert(orders);
 
@@ -230,5 +237,46 @@ public class OrderServiceImpl implements OrderService {
         BeanUtils.copyProperties(orders, orderVO);
         orderVO.setOrderDetailList(orderDetails);
         return orderVO;
+    }
+
+    /**
+     * 取消订单
+     * @param id
+     */
+    public void cancelOrdecr(Long id){
+        Orders orders = orderMapper.getOrderById(id);
+
+        // 先看订单是否存在，不存在则抛出异常
+        if(orders == null){
+            throw new OrderBusinessException(MessageConstant.ORDER_NOT_FOUND);
+        }
+
+        // 再看订单状态 1待付款 2待接单 3已接单 4派送中 5已完成 6已取消
+        if(orders.getStatus() > 2){
+            throw new OrderBusinessException(MessageConstant.ORDER_STATUS_ERROR);
+        }
+
+        Orders orderUpdate = new Orders();
+        orderUpdate.setId(id);
+
+        // 如果在待接单状态下取消订单，需要给用户退款
+        if(orders.getStatus().equals(Orders.TO_BE_CONFIRMED)){
+            // 退款
+//            weChatPayUtil.refund(
+//                    orders.getNumber(), //商户订单号
+//                    orders.getNumber(), //商户退款单号
+//                    new BigDecimal(0.01),//退款金额，单位 元
+//                    new BigDecimal(0.01));//原订单金额
+
+            // 将订单支付状态修改为退款
+            orderUpdate.setPayStatus(Orders.REFUND);
+        }
+
+        // 更新订单状态、取消原因、取消时间
+        orderUpdate.setCancelReason("用户取消");
+        orderUpdate.setStatus(Orders.CANCELLED);
+        orderUpdate.setCancelTime(LocalDateTime.now());
+
+        orderMapper.update(orderUpdate);
     }
 }
