@@ -25,7 +25,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +68,7 @@ public class OrderServiceImpl implements OrderService {
         List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
         if(list == null || list.size() == 0) {
             // 购物车数据为空
-            throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL);
+            throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL_FOR_ADD);
         }
 
         // 向订单表插入一条数据

@@ -1,11 +1,12 @@
 package com.sky.service.impl;
 
-import com.fasterxml.jackson.databind.ser.Serializers;
+import com.sky.constant.MessageConstant;
 import com.sky.context.BaseContext;
 import com.sky.dto.ShoppingCartDTO;
 import com.sky.entity.Dish;
 import com.sky.entity.Setmeal;
 import com.sky.entity.ShoppingCart;
+import com.sky.exception.ShoppingCartBusinessException;
 import com.sky.mapper.DishMapper;
 import com.sky.mapper.SetmealMapper;
 import com.sky.mapper.ShoppingCartMapper;
@@ -92,5 +93,37 @@ public class ShoppingCartServiceImpl implements ShoppingCartService {
     public void cleanShoppingCart() {
         Long userId = BaseContext.getCurrentId();
         shoppingCartMapper.deleteByUserId(userId);
+    }
+
+    /**
+     * 删除购物车中一个商品
+     * @param shoppingCartDTO
+     */
+    public void subShoppingCart(ShoppingCartDTO shoppingCartDTO) {
+        // 创建一个购物车对象 (userId && dishId/setmealId && dishFlavor)
+        ShoppingCart shoppingCart = new ShoppingCart();
+        BeanUtils.copyProperties(shoppingCartDTO, shoppingCart);
+        Long userId = BaseContext.getCurrentId();
+        shoppingCart.setUserId(userId);
+
+        // 根据此购物车对象去表中查询
+        List<ShoppingCart> list = shoppingCartMapper.list(shoppingCart);
+
+        if(list != null && list.size() > 0){
+            ShoppingCart cart = list.get(0);
+
+            // 如果数量大于1，则使其数量减一
+            if(cart.getNumber() > 1){
+                cart.setNumber(cart.getNumber() - 1);
+                shoppingCartMapper.updateNumberById(cart);
+            }else {
+                // 如果数量等于1，则删除对应的项
+                shoppingCartMapper.deleteById(cart.getId());
+            }
+            return;
+        }
+
+        // 如果没有查询到相应的购物车项，则抛出异常
+        throw new ShoppingCartBusinessException(MessageConstant.SHOPPING_CART_IS_NULL_FOR_SUB);
     }
 }
