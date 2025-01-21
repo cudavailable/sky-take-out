@@ -55,4 +55,15 @@ public class UserController {
                 .token(token).build();
         return Result.success(userLoginVO);
     }
+
+    /**
+     * 退出
+     *
+     * @return
+     */
+    @PostMapping("/logout")
+    @ApiOperation("用户退出")
+    public Result<String> logout() {
+        return Result.success();
+    }
 }
